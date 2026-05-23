@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce Retail Intelligence Dashboard</title>
+    
+    <!-- 구글 폰트 & 아이콘 -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --bg-base: #090d16;
+            --bg-surface: rgba(17, 25, 40, 0.75);
+            --bg-card: rgba(22, 34, 57, 0.6);
+            --border-glow: rgba(59, 130, 246, 0.15);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            
+            --accent-blue: #3b82f6;
+            --accent-emerald: #10b981;
+            --accent-violet: #8b5cf6;
+            --accent-rose: #f43f5e;
+            --accent-amber: #f59e0b;
+            --accent-cyan: #06b6d4;
+            
+            --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background: radial-gradient(circle at 50% 0%, #151e33 0%, var(--bg-base) 70%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 60px;
+        }
+
+        .app-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 24px 40px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+            font-size: 20px;
+            color: white;
+        }
+
+        .title-text h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .title-text p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .timestamp {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.03);
+            padding: 8px 16px;
+            border-radius: 99px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: var(--card-shadow);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 10% 10%, rgba(255,255,255,0.03) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--border-glow);
+            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.1);
+        }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .kpi-icon-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .kpi-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            margin-top: 16px;
+            letter-spacing: -0.5px;
+        }
+
+        .kpi-revenue .kpi-icon-box { background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); }
+        .kpi-revenue .kpi-value { color: #ffffff; }
+        
+        .kpi-orders .kpi-icon-box { background: rgba(16, 185, 129, 0.1); color: var(--accent-emerald); }
+        .kpi-orders .kpi-value { color: #ffffff; }
+
+        .kpi-customers .kpi-icon-box { background: rgba(139, 92, 246, 0.1); color: var(--accent-violet); }
+        .kpi-customers .kpi-value { color: #ffffff; }
+
+        .kpi-aov .kpi-icon-box { background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); }
+        .kpi-aov .kpi-value { color: #ffffff; }
+
+        .kpi-cancels .kpi-icon-box { background: rgba(244, 63, 94, 0.1); color: var(--accent-rose); }
+        .kpi-cancels .kpi-value { color: #ffffff; }
+
+        .chart-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .chart-row-equal {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 1200px) {
+            .chart-row, .chart-row-equal {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--bg-surface);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chart-title i {
+            color: var(--accent-blue);
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            flex-grow: 1;
+        }
+
+        .action-card {
+            background: linear-gradient(135deg, rgba(22, 34, 57, 0.8) 0%, rgba(9, 13, 22, 0.9) 100%);
+            border-radius: 24px;
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            padding: 32px;
+            margin-top: 32px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card::after {
+            content: '';
+            position: absolute;
+            bottom: -50px; right: -50px;
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .action-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .action-logo {
+            width: 44px;
+            height: 44px;
+            background: rgba(59, 130, 246, 0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--accent-blue);
+        }
+
+        .action-header h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .action-box {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .action-box:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(59, 130, 246, 0.15);
+        }
+
+        .action-box h3 {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-box h3.core { color: var(--accent-blue); }
+        .action-box h3.cross { color: var(--accent-emerald); }
+        .action-box h3.cancel { color: var(--accent-rose); }
+        .action-box h3.global { color: var(--accent-amber); }
+
+        .action-box p {
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="brand-title">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <div class="title-text">
+                    <h1>RETAIL INTELLIGENCE</h1>
+                    <p>글로벌 온라인 리테일 실시간 데이터 분석 대시보드</p>
+                </div>
+            </div>
+            <div class="timestamp">
+                <i class="fa-regular fa-clock"></i>
+                <span id="gen-time">대시보드 로딩 중...</span>
+            </div>
+        </header>
+
+        <section class="kpi-grid">
+            <div class="kpi-card kpi-revenue">
+                <div class="kpi-header">
+                    <span>순 매출액</span>
+                    <div class="kpi-icon-box"><i class="fa-solid fa-sterling-sign"></i></div>
+                </div>
+                <div class="kpi-value" id="kpi-rev">£0</div>
+            </div>
+            <div class="kpi-card kpi-orders">
+                <div class="kpi-header">
+                    <span>총 주문 건수</span>
+                    <div class="kpi-icon-box"><i class="fa-solid fa-receipt"></i></div>
+                </div>
+                <div class="kpi-value" id="kpi-ord">0</div>
+            </div>
+            <div class="kpi-card kpi-customers">
+                <div class="kpi-header">
+                    <span>고유 고객 수</span>
+                    <div class="kpi-icon-box"><i class="fa-solid fa-users"></i></div>
+                </div>
+                <div class="kpi-value" id="kpi-cust">0</div>
+            </div>
+            <div class="kpi-card kpi-aov">
+                <div class="kpi-header">
+                    <span>평균 주문 가치 (AOV)</span>
+                    <div class="kpi-icon-box"><i class="fa-solid fa-basket-shopping"></i></div>
+                </div>
+                <div class="kpi-value" id="kpi-aov">£0.00</div>
+            </div>
+            <div class="kpi-card kpi-cancels">
+                <div class="kpi-header">
+                    <span>주문 취소율</span>
+                    <div class="kpi-icon-box"><i class="fa-solid fa-ban"></i></div>
+                </div>
+                <div class="kpi-value" id="kpi-cancel">0.0%</div>
+            </div>
+        </section>
+
+        <section class="chart-row">
+            <div class="chart-card">
+                <div class="chart-title">
+                    <i class="fa-solid fa-chart-area"></i>
+                    <span>월별 순 매출액 및 주문 건수 추이</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="monthlyTrendChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">
+                    <i class="fa-solid fa-pie-chart"></i>
+                    <span>가격 대역별 매출 비중</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="priceSegmentChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="chart-row-equal">
+            <div class="chart-card">
+                <div class="chart-title">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>요일별 구매 패턴 분포</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="dayOfWeekChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>시간대별 주문 건수 분포</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="hourlyDistributionChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="chart-row-equal">
+            <div class="chart-card">
+                <div class="chart-title">
+                    <i class="fa-solid fa-globe"></i>
+                    <span>국가별 주문 규모 (상위 10개 시장)</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="countryStatsChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">
+                    <i class="fa-solid fa-crown"></i>
+                    <span>플랫폼 전체 베스트셀러 상품 상위 10선</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="topProductsChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="chart-row-equal">
+            <div class="chart-card">
+                <div class="chart-title">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span>고객 RFM 세그먼트 분포</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="rfmSegmentChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">
+                    <i class="fa-solid fa-font"></i>
+                    <span>상품명 내 핵심 텍스트 토큰 중요도 (TF-IDF)</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="keywordsTfidfChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section class="action-card">
+            <div class="action-header">
+                <div class="action-logo">
+                    <i class="fa-solid fa-lightbulb"></i>
+                </div>
+                <h2>💡 데이터 기반 성장을 위한 4대 핵심 비즈니스 액션 플랜</h2>
+            </div>
+            <div class="action-grid">
+                <div class="action-box">
+                    <h3 class="core"><i class="fa-solid fa-circle-check"></i> RFM 정밀 마케팅</h3>
+                    <p>상위 5% VIP 고객(Champions)을 위해 'Pre-order' 혜택과 B2B 도매 가격 협의 모듈을 제공하여 충성도를 극대화하고, 이탈 위험군(At Risk)에게는 핵심 키워드가 담긴 단골 맞춤 웰컴 쿠폰을 자동 발송합니다.</p>
+                </div>
+                <div class="action-box">
+                    <h3 class="cross"><i class="fa-solid fa-basket-shopping"></i> 장바구니 교차 판매</h3>
+                    <p>평균 주문 종류가 20개를 넘는 구매 특성을 살려, 베스트셀러 상품인 'WHITE HANGING HEART T-LIGHT HOLDER'와 고가중도 단어인 'vintage', 'pink' 컨셉 소품들을 패키지로 신설하여 AOV를 증대시킵니다.</p>
+                </div>
+                <div class="action-box">
+                    <h3 class="cancel"><i class="fa-solid fa-triangle-exclamation"></i> 대량 주문 리스크 방지</h3>
+                    <p>전체 주문의 1.8%를 점하는 취소 주문이 도매 물류 왜곡을 방해하므로, 일정 수량 이상 대량 주문 시 사전 보증금(20%) 납부 제도를 적용하여 허수 주문 및 물류비 손실 리스크를 완벽 통제합니다.</p>
+                </div>
+                <div class="action-box">
+                    <h3 class="global"><i class="fa-solid fa-plane-departure"></i> 유럽 본토 거점 풀필먼트</h3>
+                    <p>영국 이외에 대형 도매성 구매 비중이 큰 네덜란드, 독일, 프랑스 시장을 서포트하기 위해 유럽 본토 전용 풀필먼트 허브를 구축, 리드타임을 획기적으로 줄여 현지 도매 점유율을 확장합니다.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const rawData = {"kpis": {"total_revenue": 9747747.934, "total_orders": 25900, "total_customers": 4372, "avg_order_value": 376.3609240926641, "total_cancelled": 3836, "cancel_rate": 14.810810810810812}, "monthly": {"labels": ["2010-12", "2011-01", "2011-02", "2011-03", "2011-04", "2011-05", "2011-06", "2011-07", "2011-08", "2011-09", "2011-10", "2011-11", "2011-12"], "revenue": [748957.02, 560000.26, 498062.65, 683267.08, 493207.12, 723333.51, 691123.12, 681300.11, 682680.51, 1019687.62, 1070704.67, 1461756.25, 433668.01], "orders": [2025, 1476, 1393, 1983, 1744, 2162, 2012, 1927, 1737, 2327, 2637, 3462, 1015]}, "country": {"labels": ["United Kingdom", "Netherlands", "EIRE", "Germany", "France", "Australia", "Switzerland", "Spain", "Belgium", "Sweden"], "revenue": [8187806.36, 284661.54, 263276.82, 221698.21, 197403.9, 137077.27, 56385.35, 54774.58, 40910.96, 36595.91], "orders": [23494, 101, 360, 603, 461, 69, 74, 105, 119, 46], "avg_qty": [8.61, 84.41, 17.4, 12.37, 12.91, 66.44, 15.15, 10.59, 11.19, 77.14]}, "dayofweek": {"labels": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], "orders": [4138, 4722, 4815, 5660, 4184, 0, 2381]}, "hourly": {"labels": ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"], "orders": [0, 0, 0, 0, 0, 0, 22, 31, 624, 1824, 2961, 3165, 3962, 3369, 3137, 3069, 1952, 1205, 333, 219, 28, 0, 0, 0]}, "products": {"labels": ["DOTCOM POSTAGE", "REGENCY CAKESTAND 3 TIER", "WHITE HANGING HEART T-LIGHT HOLDER", "PARTY BUNTING", "JUMBO BAG RED RETROSPOT", "RABBIT NIGHT LIGHT", "POSTAGE", "PAPER CHAIN KIT 50'S CHRISTMAS ", "ASSORTED COLOUR BIRD ORNAMENT", "CHILLI LIGHTS"], "quantity": [707, 13033, 35317, 18022, 47363, 30680, 3003, 18902, 36381, 10229], "revenue": [206245.48, 164762.19, 99668.47, 98302.98, 92356.03, 66756.59, 66230.64, 63791.94, 58959.73, 53768.06]}, "price_segments": {"labels": ["Budget (<£2)", "Mid (£2-£10)", "Premium (>£10)"], "revenue": [3624455.63, 5318645.79, 804646.51]}, "rfm": {"labels": ["Hibernating", "Loyal Customers", "Champions", "At Risk", "Potential Loyalists", "About To Sleep", "Need Attention", "Promising", "Can't Lose", "New Customers"], "counts": [1060, 804, 644, 618, 481, 367, 189, 97, 71, 41], "avg_monetary": [376.22, 2718.27, 6640.5, 950.57, 677.86, 437.24, 803.98, 303.86, 2374.21, 374.07]}, "keywords": {"labels": ["set", "bag", "red", "heart", "vintage", "design", "pink", "retrospot", "box", "christmas", "white", "blue", "jumbo", "metal", "cake"], "scores": [47111.3, 30880.4, 28556.4, 26245.4, 24534.6, 22630.8, 22561.0, 22449.0, 19576.2, 19187.4, 16006.3, 15552.7, 14650.1, 14603.4, 14455.4]}};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            document.getElementById('gen-time').innerText = `Updated at: ${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+            const kpis = rawData.kpis;
+            document.getElementById('kpi-rev').innerText = `£${Math.round(kpis.total_revenue).toLocaleString()}`;
+            document.getElementById('kpi-ord').innerText = kpis.total_orders.toLocaleString();
+            document.getElementById('kpi-cust').innerText = kpis.total_customers.toLocaleString();
+            document.getElementById('kpi-aov').innerText = `£${kpis.avg_order_value.toFixed(2)}`;
+            document.getElementById('kpi-cancel').innerText = `${kpis.cancel_rate.toFixed(2)}%`;
+
+            Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+            Chart.defaults.color = '#94a3b8';
+
+            const ctxMonthly = document.getElementById('monthlyTrendChart').getContext('2d');
+            new Chart(ctxMonthly, {
+                type: 'bar',
+                data: {
+                    labels: rawData.monthly.labels,
+                    datasets: [
+                        {
+                            label: '순 매출액 (£)',
+                            type: 'line',
+                            data: rawData.monthly.revenue,
+                            borderColor: '#3b82f6',
+                            borderWidth: 3,
+                            fill: true,
+                            backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                            yAxisID: 'y-rev',
+                            tension: 0.35,
+                            pointBackgroundColor: '#3b82f6',
+                            pointHoverRadius: 7
+                        },
+                        {
+                            label: '주문 건수',
+                            type: 'bar',
+                            data: rawData.monthly.orders,
+                            backgroundColor: 'rgba(16, 185, 129, 0.35)',
+                            borderColor: '#10b981',
+                            borderWidth: 1.5,
+                            borderRadius: 6,
+                            yAxisID: 'y-ord'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { color: '#f8fafc', font: { weight: 600 } }
+                        },
+                        tooltip: { padding: 12, cornerRadius: 8 }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+                        'y-rev': {
+                            type: 'linear',
+                            position: 'left',
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: {
+                                color: '#3b82f6',
+                                callback: value => '£' + value.toLocaleString()
+                            }
+                        },
+                        'y-ord': {
+                            type: 'linear',
+                            position: 'right',
+                            grid: { display: false },
+                            ticks: { color: '#10b981' }
+                        }
+                    }
+                }
+            });
+
+            const ctxPrice = document.getElementById('priceSegmentChart').getContext('2d');
+            new Chart(ctxPrice, {
+                type: 'doughnut',
+                data: {
+                    labels: rawData.price_segments.labels,
+                    datasets: [{
+                        data: rawData.price_segments.revenue,
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(139, 92, 246, 0.7)'
+                        ],
+                        borderColor: '#090d16',
+                        borderWidth: 3,
+                        hoverOffset: 15
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#f8fafc', padding: 15, font: { size: 12 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percent = ((value / total) * 100).toFixed(1);
+                                    return ` 매출액: £${value.toLocaleString()} (${percent}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const ctxDow = document.getElementById('dayOfWeekChart').getContext('2d');
+            new Chart(ctxDow, {
+                type: 'radar',
+                data: {
+                    labels: rawData.dayofweek.labels,
+                    datasets: [{
+                        label: '주문 건수',
+                        data: rawData.dayofweek.orders,
+                        backgroundColor: 'rgba(139, 92, 246, 0.15)',
+                        borderColor: '#8b5cf6',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#8b5cf6',
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(255, 255, 255, 0.08)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.08)' },
+                            pointLabels: { color: '#f8fafc', font: { size: 11, weight: 'bold' } },
+                            ticks: { backdropColor: 'transparent', color: '#94a3b8', z: 1 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            const ctxHourly = document.getElementById('hourlyDistributionChart').getContext('2d');
+            new Chart(ctxHourly, {
+                type: 'line',
+                data: {
+                    labels: rawData.hourly.labels,
+                    datasets: [{
+                        label: '주문 건수',
+                        data: rawData.hourly.orders,
+                        borderColor: '#06b6d4',
+                        borderWidth: 3,
+                        backgroundColor: 'rgba(6, 182, 212, 0.06)',
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#06b6d4',
+                        pointRadius: 2,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+
+            const ctxCountry = document.getElementById('countryStatsChart').getContext('2d');
+            new Chart(ctxCountry, {
+                type: 'bar',
+                data: {
+                    labels: rawData.country.labels,
+                    datasets: [
+                        {
+                            label: '순 매출액 (£)',
+                            data: rawData.country.revenue,
+                            backgroundColor: 'rgba(59, 130, 246, 0.75)',
+                            borderRadius: 5,
+                            borderWidth: 0
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: value => '£' + value.toLocaleString()
+                            }
+                        },
+                        y: { grid: { display: false }, ticks: { color: '#f8fafc', font: { weight: 600 } } }
+                    }
+                }
+            });
+
+            const ctxTopProd = document.getElementById('topProductsChart').getContext('2d');
+            new Chart(ctxTopProd, {
+                type: 'bar',
+                data: {
+                    labels: rawData.products.labels.map(l => l.length > 25 ? l.substring(0, 25) + '...' : l),
+                    datasets: [{
+                        label: '매출액 (£)',
+                        data: rawData.products.revenue,
+                        backgroundColor: 'rgba(16, 185, 129, 0.75)',
+                        borderRadius: 6,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#f8fafc', font: { size: 10 }, maxRotation: 45, minRotation: 45 } },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: value => '£' + value.toLocaleString()
+                            }
+                        }
+                    }
+                }
+            });
+
+            const ctxRfm = document.getElementById('rfmSegmentChart').getContext('2d');
+            new Chart(ctxRfm, {
+                type: 'bar',
+                data: {
+                    labels: rawData.rfm.labels,
+                    datasets: [{
+                        label: '고객 수',
+                        data: rawData.rfm.counts,
+                        backgroundColor: 'rgba(139, 92, 246, 0.75)',
+                        borderColor: '#8b5cf6',
+                        borderWidth: 1.5,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#f8fafc', font: { size: 10, weight: 'bold' }, maxRotation: 30, minRotation: 30 } },
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+
+            const ctxKeywords = document.getElementById('keywordsTfidfChart').getContext('2d');
+            new Chart(ctxKeywords, {
+                type: 'bar',
+                data: {
+                    labels: rawData.keywords.labels,
+                    datasets: [{
+                        label: 'TF-IDF 중요도',
+                        data: rawData.keywords.scores,
+                        backgroundColor: 'rgba(245, 158, 11, 0.75)',
+                        borderRadius: 5,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { display: false }, ticks: { color: '#f8fafc', font: { weight: 600 } } }
+                    }
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>
